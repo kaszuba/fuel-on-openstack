@@ -1,0 +1,64 @@
+#!/bin/bash
+
+function get_router_id() {
+ neutron router-show fuel-router |grep " id "|awk '{print $4}'
+}
+function get_volume_id() {
+ nova volume-show $1|grep " id "|awk '{print $4}'
+}
+
+function create_os_net() {
+ local TID=$1
+ local NAME=$2
+ local NET=$3
+ local ADD_ROUTER=${4:-no}
+
+ neutron net-create --tenant-id $TID ${NAME}-net
+ neutron subnet-create --tenant-id $TID ${NAME}-net ${NET} --name ${NAME}-subnet --dns-nameserver 8.8.8.8 --disable-dhcp
+ local N_SUBNET_ID=$(neutron subnet-show ${NAME}-subnet |grep " id "|awk '{print $4}')
+ if [[ ${ADD_ROUTER} == 'yes' ]]; then
+  neutron router-interface-add ${R_ID} ${N_SUBNET_ID}
+ fi
+}
+
+function delete_os_net() {
+ local NAME=$1
+
+ local R_ID=$(get_router_id)
+ if [[ -n "${R_ID}" ]]; then
+  neutron router-interface-delete ${R_ID} ${NAME}-subnet
+ fi
+ neutron subnet-delete ${NAME}-subnet
+ neutron net-delete ${NAME}-net
+}
+
+function create_volume() {
+ local NAME=$1
+ local SIZE=$2
+
+ nova volume-create --display-name ${NAME} ${SIZE}
+ while [[ ! $(nova volume-show ${NAME}| grep " status " | awk '{print $4}') == 'available' ]] &>/dev/null; do
+  echo "Wait for create"
+  sleep 1
+ done
+}
+
+function delete_volume() {
+ local NAME=$1
+
+ nova volume-delete ${NAME}
+ while nova volume-show ${NAME} &>/dev/null; do
+  echo "Wait for delete ${NAME}"
+  sleep 1
+ done
+}
+
+function delete_volume_snapshot() {
+ local NAME=$1
+
+ nova volume-snapshot-delete ${NAME}
+ while nova volume-snapshot-show ${NAME} &>/dev/null; do
+  echo "Wait for delete ${NAME}"
+  sleep 1
+ done
+}

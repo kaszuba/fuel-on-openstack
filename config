@@ -1,0 +1,24 @@
+source functions
+
+NET_ADMIN_NAME=fuel-admin
+NET_ADMIN_CLASS=10.20.0.0/24
+NET_PUBLIC_NAME=fuel-public
+NET_PUBLIC_CLASS=172.16.0.0/24
+NET_MGMT_NAME=fuel-mgmt
+NET_MGMT_CLASS=192.168.0.0/24
+NET_STORAGE_NAME=fuel-storage
+NET_STORAGE_CLASS=192.168.1.0/24
+
+FUEL_MASTER_NAME=fuel-master
+FUEL_SLAVE_NAME=fuel-slave
+
+source ~/openrc-admin.sh
+
+# get tenant id
+TID=$(keystone tenant-get test |grep " id " |awk '{print $4}')
+#TID=ID
+
+source ~/openrc-test.sh
+
+#FIP=$(nova floating-ip-list |grep " 10.72.2." | head -1 |awk '{print $2}')
+FIP=172.16.1.100

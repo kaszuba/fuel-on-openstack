@@ -1,0 +1,9 @@
+#!/bin/bash
+
+source config
+
+#nova delete fuel-test-master
+
+delete_os_net ${NET_ADMIN_NAME}
+delete_os_net ${NET_PUBLIC_NAME}
+neutron router-delete fuel-router
